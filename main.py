@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
+import os
+import pickle
 
 
 class App(tk.Tk):
@@ -19,10 +22,17 @@ class App(tk.Tk):
         self.bg_menu_color = '#474747'
         self.bg_dark_theme_color = '#2D2D2D'
         self.fg_dark_theme_color = '#FFFFFF'
-
+        
+        self.configurations=self.loadConfigurations()
+        self.configurations['saved']=0
+        
         self.dark_theme_var = tk.IntVar()
         self.fit_text_horizontally_var = tk.IntVar()
 
+        self.filetypes_to_use = (('All files', '*.*'),
+                                 ('CSV files', '.csv'),
+                                 ('Text files', '.txt'),
+                                 ('HTML', '.html'))
         # Text Field
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -62,7 +72,7 @@ class App(tk.Tk):
         self.menu.add_separator()
         self.menu.add_command(label='Save',
                               underline=0,
-                              command=lambda: self.testCommand())
+                              command=self.saveFile)
         self.menu.add_command(label='Save As',
                               underline=5,
                               command=self.testCommand)
@@ -97,6 +107,31 @@ class App(tk.Tk):
                               underline=0,
                               command=self.quitApplication)
 
+    def saveFile(self):
+        text = self.textField.get('1.0','end-1c')
+        if self.configurations['saved'] ==0:
+            self.saveFileAs()
+        else:
+            # that is already saved once, now make changes in the same file
+            path = os.path.join(self.configurations['path'],self.configurations['filename'])
+            self.writeTextFile(path,text)
+    def saveFileAs(self):
+        text = self.textField.get('1.0','end-1c')
+        file_to_save = filedialog.asksaveasfilename(initialdir=self.configurations['path'],
+                                                        title="Choose file",
+                                                        filetypes=self.filetypes_to_use)
+        print(file_to_save)
+        
+        path_for_next_time,filename =os.path.split(file_to_save)
+        self.configurations['path']=path_for_next_time
+        self.configurations['filename']=filename
+        self.configurations['saved']=1
+        self.saveConfigurations()
+        self.writeTextFile(file_to_save,text)
+        self.title(filename)    
+    def writeTextFile(self,filename,text):
+        with open(filename,'w') as f:
+            f.write(text)
     def quitApplication(self):
         on_closing()
 
@@ -109,28 +144,43 @@ class App(tk.Tk):
     def darkTheme(self):
         # Storing the value of darktheme checkbox variable for future use.
         # TODO: use different method for storing
-        with open('darktheme', 'w') as f:
-            f.write(str(self.dark_theme_var.get()))
+        self.configurations['darktheme']=self.dark_theme_var.get()
+        self.saveConfigurations()
         self.setTheme()
 
     def setTheme(self):
         # changing the value of self.dark_theme_var, that is the dark theme checkbox variable
-        with open('darktheme', 'r') as f:
-            val = int(f.read())
-            if val == 1:
-                self.dark_theme_var.set(1)
-                self.textField.config(background=self.bg_dark_theme_color,
-                                      foreground='white',
-                                      insertbackground='white')
-                self.scroll.config()    # change color etc
-            else:
-                self.dark_theme_var.set(0)
-                self.textField.config(background='white',
-                                      foreground='black',
-                                      insertbackground='black',
-                                      )
-                self.scroll.config()    # change color etc
+        try:
+            val = self.configurations['darktheme']
+        except KeyError:
+            val=0
+        if val == 1:
+            self.dark_theme_var.set(1)
+            self.textField.config(background=self.bg_dark_theme_color,
+                                    foreground='white',
+                                    insertbackground='white')
+            self.scroll.config()    # change color etc
+        else:
+            self.dark_theme_var.set(0)
+            self.textField.config(background='white',
+                                    foreground='black',
+                                    insertbackground='black',
+                                    )
+            self.scroll.config()    # change color etc
 
+    def saveConfigurations(self):
+        with open('configurations.bin', 'wb') as f:
+            pickle.dump(self.configurations, f)
+
+    def loadConfigurations(self):
+        try:
+            with open('configurations.bin', 'rb') as f:
+                data = pickle.load(f)
+                return data
+        except FileNotFoundError:
+            data ={}
+            data['path']='/'
+            return {}
 
 if __name__ == "__main__":
     app = App()
