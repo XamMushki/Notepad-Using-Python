@@ -14,7 +14,7 @@ class App(tk.Tk):
         MyLeftPos = (self.winfo_screenwidth() - 1000) / 2
         myTopPos = (self.winfo_screenheight() - 500) / 2
         self.geometry("%dx%d+%d+%d" % (1000, 500, MyLeftPos, myTopPos))
-        self.title('Notepad - Untitled')
+        self.title('Notepad Alfaz - Untitled')
 
         # Variables
         self.bg_color = '#382929'
@@ -175,7 +175,7 @@ class App(tk.Tk):
                 with open(file_to_open,'r') as f:
                     text = f.read()
                 self.textField.insert('1.0',text)
-                self.title('Notepad - '+filename)
+                self.title('Notepad Alfaz - '+filename)
                 self.configurations['filename'] = filename
                 self.configurations['saved'] = 1
                 
@@ -206,7 +206,7 @@ class App(tk.Tk):
             self.saveConfigurations()
             self.writeTextFile(file_to_save, text)
             self.configurations['saved'] = 1
-            self.title('Notepad - '+filename)
+            self.title('Notepad Alfaz - '+filename)
 
             self.callReset = True
 
@@ -234,7 +234,7 @@ class App(tk.Tk):
         else:
             # also used and called when window X/quit button is clicked from on_closing()
             result = messagebox.askyesno(
-                'Quit', 'Are you sure, you want to quit?')
+                'Quit Notepad Alfaz', 'Are you sure, you want to quit?')
             if result:
                 app.destroy()
 
@@ -288,11 +288,10 @@ class App(tk.Tk):
 
     def resetEverything(self):
         self.textField.delete('1.0', 'end')
-        self.title('Notepad - Untitled')
+        self.title('Notepad Alfaz - Untitled')
         self.configurations['filename'] = ''
         self.configurations['saved'] = 0
         self.callReset = False
-        self.can_open_file=False
         # self.textField.insert('end','')
 
 
