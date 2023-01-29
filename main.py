@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import simpledialog
 import os
 import pickle
 
@@ -14,26 +15,39 @@ class App(tk.Tk):
         MyLeftPos = (self.winfo_screenwidth() - 1000) / 2
         myTopPos = (self.winfo_screenheight() - 500) / 2
         self.geometry("%dx%d+%d+%d" % (1000, 500, MyLeftPos, myTopPos))
-        self.title('Notepad Alfaz - Untitled')
+        self.minsize(500, 300)
+        self.title('Alfaaz - *untitled')
 
         # Variables
         self.bg_color = '#382929'
         self.fg_color = '#FFFFFF'
-        self.bg_menu_color = '#474747'
-        self.bg_dark_theme_color = '#2D2D2D'
+        self.bg_menu_color = '#2C2C2C'
+        self.bg_menu_item_color = '#161616'
+        self.bg_dark_theme_color = '#1E1E1E'
         self.fg_dark_theme_color = '#FFFFFF'
+        self.color_light_blue = '#424141'
 
         self.configurations = self.loadConfigurations()
         self.configurations['saved'] = 0
 
+        self.recent_file_to_open_var = tk.StringVar()
         self.dark_theme_var = tk.IntVar()
         self.fit_text_horizontally_var = tk.IntVar()
         self.text_var = tk.StringVar()
+        self.font_type_var = tk.StringVar()
+        self.font_type_var.set(self.configurations['fontType'])
 
-        self.filetypes_to_use = (('All files', '*.*'),
+        self.filetypes_to_use = (('Text files', '.txt'),
                                  ('CSV files', '.csv'),
-                                 ('Text files', '.txt'),
-                                 ('HTML', '.html'))
+                                 ('HTML', '.html htm'),
+                                 ('All files', '*. *'))
+
+        self.fonts = ['Arial', 'Bomber_Escort_Condensed', 'Courier', 'DejaVu_Sans_Mono', 'Droid_Sans_Fallback',
+                      'Gayathri', 'Gayathri', 'Gubbi', 'Gurajada', 'KacstQurn', 'Kalimati', 'Khmer_OS_System',
+                      'Lohit_Kannada', 'Lohit_Tamil_Classical', 'Lohit_Telugu', 'Mandali', 'Mukti',
+                      'OpenSymbol', 'Pagul', 'Peddana', 'Purisa', 'Rachana', 'Rasa', 'Robot_Invaders',
+                      'Samanata', 'Samyak_Devanagari', 'Standard_Symbols_PS', 'Tibetan_Machine_Uni', 'Timmana',
+                      'Umpush']
         # Text Field
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -49,7 +63,8 @@ class App(tk.Tk):
                                  padx=5,
                                  tabs=(25)
                                  )
-        self.textField.config(insertwidth=3, font=('Arial', 13))
+        self.textField.config(insertwidth=3, font=(
+            self.configurations['fontType'], self.configurations['fontSize']))
         self.textField.grid(sticky='nsew')
 
         self.scroll.config(command=self.textField.yview)
@@ -61,34 +76,101 @@ class App(tk.Tk):
         self.menu = tk.Menu(self, bg=self.bg_menu_color,
                             fg=self.fg_color,
                             font=("Verdana", 10),
-                            activebackground="#53728E",
+                            activebackground=self.color_light_blue,
                             activeforeground="white",
-                            )
+                            activeborderwidth=0,
+                            selectcolor='white',
+                            border=0)
         self.configure(menu=self.menu, border=0, relief=tk.FLAT,)
 
-        self.menu.add_command(label='New File',
-                              underline=0,
-                              command=self.createNewFile)
+        self.files_menu = tk.Menu(self,
+                                  tearoff=0,
+                                  background=self.bg_menu_color,
+                                  activebackground=self.color_light_blue,
+                                  activeforeground="white",
+                                  foreground='white',
+                                  border=0
+                                  )
+        self.menu.add_cascade(menu=self.files_menu,
+                              label='File',
+                              underline=0)
 
-        self.menu.add_command(label='Open File',
-                              underline=0,
-                              command=self.openFile)
-        self.menu.add_separator()
-        self.menu.add_command(label='Save',
-                              underline=0,
-                              command=self.saveFile)
-        self.menu.add_command(label='Save As',
-                              underline=5,
-                              command=self.saveFileAs)
+        self.files_menu.add_command(label='   New File'.ljust(33)+'Ctrl+N',
+                                    underline=3,
+                                    command=self.createNewFile)
 
+        self.files_menu.add_command(label='   Open File'.ljust(33)+'Ctrl+O',
+                                    underline=3,
+                                    command=self.openFile)
+
+        self.open_recent_files = tk.Menu(self, tearoff=0,
+                                         background=self.bg_menu_color,
+                                         activebackground=self.color_light_blue,
+                                         activeforeground='white',
+                                         foreground='white',
+                                         border=0,
+                                         selectcolor='white',)
+        self.files_menu.add_cascade(menu=self.open_recent_files,
+                                    label='   Open Recent',
+                                    underline=5,
+                                    command=self.showRecentFiles,
+                                    )
+        self.files_menu.add_separator()
+        self.files_menu.add_command(label='   Save'+'Ctrl+S'.rjust(36),
+                                    underline=3,
+                                    command=self.saveFile)
+        self.files_menu.add_command(label='   Save As'.ljust(24)+'Ctrl+Shift+S',
+                                    underline=8,
+                                    command=self.saveFileAs)
+        self.files_menu.add_separator()
+
+        self.files_menu.add_command(label='   Exit'.ljust(38)+'Ctrl+Q',
+                                    underline=4,
+                                    command=self.exitApplication)
+        # Preferences Cascade
         self.preferences = tk.Menu(self, tearoff=0,
                                    background=self.bg_menu_color,
-                                   activebackground="#53728E",
+                                   activebackground=self.color_light_blue,
                                    activeforeground="white",
-                                   foreground='white')
+                                   foreground='white',
+                                   border=0,
+                                   selectcolor='white'
+                                   )
         self.menu.add_cascade(menu=self.preferences,
                               label='Preferences',
                               underline=0)
+
+        self.font_settings_menu = tk.Menu(self, tearoff=0,
+                                          background=self.bg_menu_color,
+                                          activebackground=self.color_light_blue,
+                                          activeforeground="white",
+                                          foreground='white',
+                                          border=0,
+                                          selectcolor='white'
+                                          )
+        self.preferences.add_cascade(menu=self.font_settings_menu,
+                                     label='Font Settings'.ljust(30))
+
+        self.font_settings_menu.add_command(label='   Font Size'.ljust(30),
+                                            command=self.changeFontSize)
+        self.font_radio_menu = tk.Menu(self, tearoff=0,
+                                       background=self.bg_menu_color,
+                                       activebackground=self.color_light_blue,
+                                       activeforeground="white",
+                                       foreground='white',
+                                       border=0,
+                                       selectcolor='white',
+                                       )
+
+        for font in self.fonts:
+            self.font_radio_menu.add_radiobutton(label=font,
+                                                 variable=self.font_type_var,
+                                                 command=self.changeFontType,
+                                                 font=(font, 10))
+        self.font_settings_menu.add_cascade(
+            label='   Font Type', menu=self.font_radio_menu)
+
+        self.preferences.add_separator()
 
         self.preferences.add_checkbutton(label='Dark Theme',
                                          underline=0,
@@ -96,7 +178,6 @@ class App(tk.Tk):
                                          command=self.darkTheme,
                                          )
 
-        self.setTheme()
         # add horizontal continous text with scrollbar functinality
         # add x-axis scrollbar
         # change textField configurations
@@ -106,17 +187,147 @@ class App(tk.Tk):
                                          underline=9,
                                          variable=self.fit_text_horizontally_var,
                                          state='disabled')
+        self.preferences.add_separator()
 
-        self.menu.add_command(label='Quit',
-                              underline=0,
-                              command=self.quitApplication)
+        self.preferences.add_command(label='Reset To Default',
+                                     command=self.resetSettings)
+
+        # HELP Cascade
+        self.help_menu = tk.Menu(self, tearoff=0,
+                                 background=self.bg_menu_color,
+                                 activebackground=self.color_light_blue,
+                                 activeforeground="white",
+                                 foreground='white',
+                                 border=0,
+                                 selectcolor='white')
+        self.menu.add_cascade(menu=self.help_menu,
+                              label='Help',
+                              underline=0)
+        self.help_menu.add_command(label='   Keyboard Shortcuts'.ljust(30))
+        self.help_menu.add_separator()
+        self.help_menu.add_command(label='   About'.ljust(40),)
+        
+        self.showRecentFiles()
+        self.setTheme()
+
+        # KEY BINDINGS SHORTCUTS
+        #
+        self.bind('<Control-n>', lambda event: self.createNewFile())
+        self.bind('<Control-o>', lambda event: self.openFile())
+        self.bind('<Control-s>', lambda event: self.saveFile())
+        self.bind('<Control-S>', lambda event: self.saveFileAs())   # uppercase S means Ctrl+Shift+s
+        self.bind('<Control-q>', lambda event: self.exitApplication())
 
     # variables and functions
     callReset = False
 
+    # def openRecentFile(self,file):
+    #     def fun():
+    #         print(file)
+    #     return fun
+    def openRecentFile(self, file):
+        def openOurFile():
+            can_open_file = False
+            # work around , bug , when 'Ctrl+o' is used instead of 'Open File' button in menu
+            # hence used .strip() method to check
+            # clearing the empty newlines
+            temp_text = self.textField.get('1.0', 'end-1c').strip()
+            self.textField.delete('1.0', 'end-1c')
+            self.textField.insert('1.0', temp_text)
+            #
+            # First check the conditions same as checked when creating a new file.
+            filename = os.path.join(self.configurations['path'],
+                                    self.configurations['filename'])
+
+            if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c').strip() == '' or \
+                    self.configurations['saved'] == 1 and not self.readTextFile(filename) == self.textField.get('1.0', 'end-1c'):
+                # that is
+                # file was not saved and/but the text field is not empty
+                # or
+                # file was saved and/but some new changes were made to the text
+                result = messagebox.askyesnocancel(
+                    'Do you want to Save the changes?', 'Your changes will be lost if you don\'t save them.')
+                if result:
+                    self.saveFile()
+                    if self.callReset:
+                        can_open_file = True
+                elif result == None:
+                    pass
+                elif not result:
+                    can_open_file = True
+            else:
+                can_open_file = True
+
+            if can_open_file:
+                if file:
+                    self.resetEverything()
+                    path_for_future_use, filename = os.path.split(file)
+                    self.configurations['path'] = path_for_future_use
+                    self.saveConfigurations()
+
+                    with open(file, 'r') as f:
+                        text = f.read()
+                    self.textField.insert('1.0', text)
+                    self.title('Alfaaz - '+filename)
+                    self.configurations['filename'] = filename
+                    self.configurations['saved'] = 1
+        return openOurFile
+
+    def showRecentFiles(self):
+        recent_files = self.configurations['recentFiles']
+        self.open_recent_files.delete(0, 'end')
+        for rf in recent_files:
+            path, filename = os.path.split(rf)
+            self.open_recent_files.add_command(label='   ~'+rf.ljust(30),
+                                               font=('Verdana', 10),
+                                               command=self.openRecentFile(rf))
+        self.open_recent_files.add_separator()
+        self.open_recent_files.add_command(label='   Clear Recently Opened',
+                                               command=self.clearRecentlyOpened)
+    def clearRecentlyOpened(self):
+        result = messagebox.askyesno('Clear Recently Opened Files','Are you sure, you want to clear the recently opened file history?')
+        if result:
+            self.configurations['recentFiles']=[]
+            self.saveConfigurations()
+            self.showRecentFiles()
+        else:
+            pass
+    def resetSettings(self):
+        # self.configurations['path'] = '/'
+        # self.configurations['filename'] = ''
+        self.configurations['saved'] = 0
+        self.configurations['fontSize'] = 15
+        self.configurations['fontType'] = 'Arial'
+        self.configurations['darktheme'] = 0
+        self.saveConfigurations()
+
+        self.textField.config(font=(
+            self.configurations['fontType'],
+            self.configurations['fontSize']))
+        self.setTheme()
+
+    def changeFontType(self):
+        font_type = self.font_type_var.get()
+        self.font_type_var.get()
+        self.configurations['fontType'] = font_type
+        self.saveConfigurations()
+        self.textField.config(
+            font=(self.configurations['fontType'], self.configurations['fontSize']))
+
+    def changeFontSize(self):
+        result = simpledialog.askinteger('Font Size',
+                                         'Enter Font Size (px)',
+                                         minvalue=1,
+                                         initialvalue=self.configurations['fontSize'])
+        if result:
+            self.configurations['fontSize'] = result
+            self.saveConfigurations()
+            self.textField.config(
+                font=(self.configurations['fontType'], self.configurations['fontSize']))
+
     def createNewFile(self):
-        filename = os.path.join(
-            self.configurations['path'], self.configurations['filename'])
+        filename = os.path.join(self.configurations['path'],
+                                self.configurations['filename'])
         if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c') == '' or \
                 self.configurations['saved'] == 1 and not self.readTextFile(filename) == self.textField.get('1.0', 'end-1c'):
             # that is
@@ -129,20 +340,27 @@ class App(tk.Tk):
                 self.saveFile()
                 if self.callReset:
                     self.resetEverything()
-            elif result ==None:
+            elif result == None:
                 pass
             elif not result:
                 self.resetEverything()
         else:
             self.resetEverything()
-    
 
     def openFile(self):
-        can_open_file =False
+        can_open_file = False
+        # work around , bug , when 'Ctrl+o' is used instead of 'Open File' button in menu
+        # hence used .strip() method to check
+        # clearing the empty newlines
+        temp_text = self.textField.get('1.0', 'end-1c').strip()
+        self.textField.delete('1.0', 'end-1c')
+        self.textField.insert('1.0', temp_text)
+        #
         # First check the conditions same as checked when creating a new file.
-        filename = os.path.join(
-            self.configurations['path'], self.configurations['filename'])
-        if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c') == '' or \
+        filename = os.path.join(self.configurations['path'],
+                                self.configurations['filename'])
+
+        if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c').strip() == '' or \
                 self.configurations['saved'] == 1 and not self.readTextFile(filename) == self.textField.get('1.0', 'end-1c'):
             # that is
             # file was not saved and/but the text field is not empty
@@ -153,45 +371,62 @@ class App(tk.Tk):
             if result:
                 self.saveFile()
                 if self.callReset:
-                    can_open_file=True
-            elif result ==None:
+                    can_open_file = True
+            elif result == None:
                 pass
             elif not result:
-                can_open_file=True
+                can_open_file = True
         else:
-            can_open_file=True
-        
+            can_open_file = True
+
         if can_open_file:
-            
             file_to_open = filedialog.askopenfilename(initialdir=self.configurations['path'],
-                                                  title='Choose file',
-                                                  filetypes=self.filetypes_to_use)
+                                                      title='Choose file',
+                                                      filetypes=self.filetypes_to_use)
             if file_to_open:
                 self.resetEverything()
-                path_for_future_use,filename=os.path.split(file_to_open)
-                self.configurations['path']=path_for_future_use
-                self.saveConfigurations
-                
-                with open(file_to_open,'r') as f:
+                path_for_future_use, filename = os.path.split(file_to_open)
+                self.configurations['path'] = path_for_future_use
+                self.saveConfigurations()
+
+                with open(file_to_open, 'r') as f:
                     text = f.read()
-                self.textField.insert('1.0',text)
-                self.title('Notepad Alfaz - '+filename)
+                self.textField.insert('1.0', text)
+                self.title('Alfaaz - '+filename)
                 self.configurations['filename'] = filename
                 self.configurations['saved'] = 1
-                
-                
 
     def saveFile(self):
         # self.configurations['saved']=0
         text = self.textField.get('1.0', 'end-1c')
         if self.configurations['saved'] == 0:
             self.saveFileAs()
+
         else:
             # that is already saved once, now make changes in the same file
             path = os.path.join(
                 self.configurations['path'], self.configurations['filename'])
             self.writeTextFile(path, text)
             self.callReset = True
+
+            # storing and will be used for opening recent files
+            if len(self.configurations['recentFiles']) <= 20:
+                if path in self.configurations['recentFiles']:
+                    # that is, path already exist,
+                    # now removing it ...
+                    self.configurations['recentFiles'].remove(path)
+                # ... and placing it at index zero, since the list doesn't contain the path,
+                # because it is either removed in the above step or it wasn't stored in the first place.
+                self.configurations['recentFiles'].insert(0, path)
+            else:
+                # len >20, remove last element/path
+                # and insert new path at index 0
+                del self.configurations['recentFiles'][-1]
+                self.configurations['recentFiles'].insert(0, path)
+
+            self.saveConfigurations()
+            # update the list in UI
+            self.showRecentFiles()
 
     def saveFileAs(self):
 
@@ -206,9 +441,29 @@ class App(tk.Tk):
             self.saveConfigurations()
             self.writeTextFile(file_to_save, text)
             self.configurations['saved'] = 1
-            self.title('Notepad Alfaz - '+filename)
+            self.title('Alfaaz - '+filename)
 
             self.callReset = True
+
+            # storing and will be used for opening recent files
+            path = os.path.join(path_for_next_time,filename)
+            if len(self.configurations['recentFiles']) <= 20:
+                if path in self.configurations['recentFiles']:
+                    # that is, path already exist,
+                    # now removing it ...
+                    self.configurations['recentFiles'].remove(path)
+                # ... and placing it at index zero, since the list doesn't contain the path,
+                # because it is either removed in the above step or it wasn't stored in the first place.
+                self.configurations['recentFiles'].insert(0, path)
+            else:
+                # len >20, remove last element/path
+                # and insert new path at index 0
+                del self.configurations['recentFiles'][-1]
+                self.configurations['recentFiles'].insert(0, path)
+
+            self.saveConfigurations()
+            # update the list in UI
+            self.showRecentFiles()
 
     def writeTextFile(self, filename, text):
         with open(filename, 'w') as f:
@@ -218,7 +473,7 @@ class App(tk.Tk):
         with open(filename, 'r') as f:
             return f.read()
 
-    def quitApplication(self):
+    def exitApplication(self):
         filename = os.path.join(
             self.configurations['path'], self.configurations['filename'])
         if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c') == '' or \
@@ -228,21 +483,19 @@ class App(tk.Tk):
             # or
             # file was saved but some new changes were made to the text
             result = messagebox.askyesno(
-                'Quit without Saving', 'Are you sure, you want to quit without saving?')
+                'Exit without Saving', 'Are you sure, you want to exit without saving?')
             if result:
                 self.destroy()
         else:
-            # also used and called when window X/quit button is clicked from on_closing()
+            # also used and called when window X/exit button is clicked from on_closing()
             result = messagebox.askyesno(
-                'Quit Notepad Alfaz', 'Are you sure, you want to quit?')
+                'Exit Alfaaz', 'Are you sure, you want to exit?')
             if result:
                 app.destroy()
 
-    def testCommand(self):
-        print('clicked')
-
     def fitTextHorizontally(self):
-        print('Horizontal set')
+        # print('Horizontal set')
+        pass
 
     def darkTheme(self):
         # Storing the value of darktheme checkbox variable for future use.
@@ -282,13 +535,16 @@ class App(tk.Tk):
                 return data
         except FileNotFoundError:
             data = {'path': '/',
-                    'filename':'',
-                    'saved':0}
+                    'filename': '',
+                    'saved': 0,
+                    'fontSize': 15,
+                    'fontType': 'Arial',
+                    'recentFiles': []}
             return data
 
     def resetEverything(self):
         self.textField.delete('1.0', 'end')
-        self.title('Notepad Alfaz - Untitled')
+        self.title('Alfaaz - *untitled')
         self.configurations['filename'] = ''
         self.configurations['saved'] = 0
         self.callReset = False
@@ -299,7 +555,7 @@ if __name__ == "__main__":
     app = App()
 
     def on_closing():
-        app.quitApplication()
+        app.exitApplication()
 
     app.protocol("WM_DELETE_WINDOW", on_closing)
     app.mainloop()
