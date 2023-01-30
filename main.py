@@ -35,6 +35,8 @@ class App(tk.Tk):
         self.fit_text_horizontally_var = tk.IntVar()
         self.text_var = tk.StringVar()
         self.font_type_var = tk.StringVar()
+        self.font_color_var = tk.StringVar()
+        self.font_color_var.set(self.configurations['fontColor'])
         self.font_type_var.set(self.configurations['fontType'])
 
         self.filetypes_to_use = (('Text files', '.txt'),
@@ -48,13 +50,23 @@ class App(tk.Tk):
                       'OpenSymbol', 'Pagul', 'Peddana', 'Purisa', 'Rachana', 'Rasa', 'Robot_Invaders',
                       'Samanata', 'Samyak_Devanagari', 'Standard_Symbols_PS', 'Tibetan_Machine_Uni', 'Timmana',
                       'Umpush']
+
+        self.font_colors = ['White', 'Black', 'Blue', 'Cyan', 'DarkSlateGray', 'DarkCyan', 'Lightblue',
+                            'PowderBLue', 'Purple', 'Indigo', 'DarkOrange', 'Orange', 'OrangeRed',
+                            'Green', 'Red', 'Yellow', 'DimGray', 'Gray', 'Lavender', 'Tan']
         # Text Field
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         self.textField = tk.Text(self, relief=tk.FLAT)
 
-        self.scroll = tk.Scrollbar(self)
+        self.scroll = tk.Scrollbar(self,
+                                   background='dimgray',
+                                   activebackground='dimgray',
+                                   width=10,
+                                   bg='#1c1a1a',
+                                   troughcolor=self.bg_menu_color
+                                   )
         self.textField.configure(yscrollcommand=self.scroll.set,
                                  border=0, relief=tk.FLAT,
                                  highlightthickness=0,
@@ -77,9 +89,9 @@ class App(tk.Tk):
                             fg=self.fg_color,
                             font=("Verdana", 10),
                             activebackground=self.color_light_blue,
-                            activeforeground="white",
+                            activeforeground="White",
                             activeborderwidth=0,
-                            selectcolor='white',
+                            selectcolor='White',
                             border=0)
         self.configure(menu=self.menu, border=0, relief=tk.FLAT,)
 
@@ -87,8 +99,8 @@ class App(tk.Tk):
                                   tearoff=0,
                                   background=self.bg_menu_color,
                                   activebackground=self.color_light_blue,
-                                  activeforeground="white",
-                                  foreground='white',
+                                  activeforeground="White",
+                                  foreground='White',
                                   border=0
                                   )
         self.menu.add_cascade(menu=self.files_menu,
@@ -106,10 +118,10 @@ class App(tk.Tk):
         self.open_recent_files = tk.Menu(self, tearoff=0,
                                          background=self.bg_menu_color,
                                          activebackground=self.color_light_blue,
-                                         activeforeground='white',
-                                         foreground='white',
+                                         activeforeground='White',
+                                         foreground='White',
                                          border=0,
-                                         selectcolor='white',)
+                                         selectcolor='White',)
         self.files_menu.add_cascade(menu=self.open_recent_files,
                                     label='   Open Recent',
                                     underline=5,
@@ -131,10 +143,10 @@ class App(tk.Tk):
         self.preferences = tk.Menu(self, tearoff=0,
                                    background=self.bg_menu_color,
                                    activebackground=self.color_light_blue,
-                                   activeforeground="white",
-                                   foreground='white',
+                                   activeforeground="White",
+                                   foreground='White',
                                    border=0,
-                                   selectcolor='white'
+                                   selectcolor='White'
                                    )
         self.menu.add_cascade(menu=self.preferences,
                               label='Preferences',
@@ -143,23 +155,26 @@ class App(tk.Tk):
         self.font_settings_menu = tk.Menu(self, tearoff=0,
                                           background=self.bg_menu_color,
                                           activebackground=self.color_light_blue,
-                                          activeforeground="white",
-                                          foreground='white',
+                                          activeforeground="White",
+                                          foreground='White',
                                           border=0,
-                                          selectcolor='white'
+                                          selectcolor='White',
+                                          font=('Verdana', 10)
                                           )
         self.preferences.add_cascade(menu=self.font_settings_menu,
+                                     underline=0,
                                      label='Font Settings'.ljust(30))
 
         self.font_settings_menu.add_command(label='   Font Size'.ljust(30),
+                                            underline=8,
                                             command=self.changeFontSize)
         self.font_radio_menu = tk.Menu(self, tearoff=0,
                                        background=self.bg_menu_color,
                                        activebackground=self.color_light_blue,
-                                       activeforeground="white",
-                                       foreground='white',
+                                       activeforeground="White",
+                                       foreground='White',
                                        border=0,
-                                       selectcolor='white',
+                                       selectcolor='White',
                                        )
 
         for font in self.fonts:
@@ -167,8 +182,31 @@ class App(tk.Tk):
                                                  variable=self.font_type_var,
                                                  command=self.changeFontType,
                                                  font=(font, 10))
-        self.font_settings_menu.add_cascade(
-            label='   Font Type', menu=self.font_radio_menu)
+        self.font_settings_menu.add_cascade(label='   Font Type',
+                                            underline=8,
+                                            menu=self.font_radio_menu)
+
+        # Font Color Menu
+        self.font_color_radio_menu = tk.Menu(self, tearoff=0,
+                                             background=self.bg_menu_color,
+                                             activebackground=self.color_light_blue,
+                                             activeforeground="White",
+                                             foreground='White',
+                                             border=0,
+                                             selectcolor='White',
+                                             )
+        i = 0
+        for color in self.font_colors:
+            if i == 2:
+                self.font_color_radio_menu.add_separator()
+            self.font_color_radio_menu.add_radiobutton(label=color,
+                                                       variable=self.font_color_var,
+                                                       command=self.changeFontColor,
+                                                       foreground=color)
+            i += 1
+        self.font_settings_menu.add_cascade(label='   Font Color'.ljust(20),
+                                            underline=8,
+                                            menu=self.font_color_radio_menu)
 
         self.preferences.add_separator()
 
@@ -190,36 +228,59 @@ class App(tk.Tk):
         self.preferences.add_separator()
 
         self.preferences.add_command(label='Reset To Default',
+                                     underline=0,
                                      command=self.resetSettings)
 
         # HELP Cascade
         self.help_menu = tk.Menu(self, tearoff=0,
                                  background=self.bg_menu_color,
                                  activebackground=self.color_light_blue,
-                                 activeforeground="white",
-                                 foreground='white',
+                                 activeforeground="White",
+                                 foreground='White',
                                  border=0,
-                                 selectcolor='white')
+                                 selectcolor='White')
         self.menu.add_cascade(menu=self.help_menu,
                               label='Help',
                               underline=0)
-        self.help_menu.add_command(label='   Keyboard Shortcuts'.ljust(30))
+        self.help_menu.add_command(label='   Keyboard Shortcuts'.ljust(30),
+                                   underline=3,
+                                   state='disabled')
         self.help_menu.add_separator()
-        self.help_menu.add_command(label='   About'.ljust(40),)
-        
-        self.showRecentFiles()
-        self.setTheme()
+        self.help_menu.add_command(label='   About'.ljust(40),
+                                   underline=3,
+                                   command=self.showAbout)
+        # Function calls at start
+        self.doAtStart(self.configurations['fontColor'])
 
         # KEY BINDINGS SHORTCUTS
         #
         self.bind('<Control-n>', lambda event: self.createNewFile())
         self.bind('<Control-o>', lambda event: self.openFile())
         self.bind('<Control-s>', lambda event: self.saveFile())
-        self.bind('<Control-S>', lambda event: self.saveFileAs())   # uppercase S means Ctrl+Shift+s
+        # uppercase S means Ctrl+Shift+s
+        self.bind('<Control-S>', lambda event: self.saveFileAs())
         self.bind('<Control-q>', lambda event: self.exitApplication())
 
     # variables and functions
+    def doAtStart(self, font_color):
+        self.setTheme()
+        self.showRecentFiles()
+        self.textField.config(foreground=font_color)
+        self.configurations['fontColor'] = font_color
+        self.font_color_var.set(font_color)
+
     callReset = False
+
+    def changeFontColor(self):
+        font_color = self.font_color_var.get()
+        self.configurations['fontColor'] = font_color
+        self.saveConfigurations()
+        self.textField.config(fg=self.configurations['fontColor'])
+
+    def showAbout(self):
+        photo = tk.PhotoImage(file='icon.png')
+        messagebox.showinfo('About Alfaaz', 'Alfaaz is a simple but functional text editor, \
+            that is developed using Python and Tkinter.\n\nDeveloper: Xam Mushki')
 
     # def openRecentFile(self,file):
     #     def fun():
@@ -283,15 +344,18 @@ class App(tk.Tk):
                                                command=self.openRecentFile(rf))
         self.open_recent_files.add_separator()
         self.open_recent_files.add_command(label='   Clear Recently Opened',
-                                               command=self.clearRecentlyOpened)
+                                           command=self.clearRecentlyOpened)
+
     def clearRecentlyOpened(self):
-        result = messagebox.askyesno('Clear Recently Opened Files','Are you sure, you want to clear the recently opened file history?')
+        result = messagebox.askyesno(
+            'Clear Recently Opened Files', 'Are you sure, you want to clear the recently opened file history?')
         if result:
-            self.configurations['recentFiles']=[]
+            self.configurations['recentFiles'] = []
             self.saveConfigurations()
             self.showRecentFiles()
         else:
             pass
+
     def resetSettings(self):
         # self.configurations['path'] = '/'
         # self.configurations['filename'] = ''
@@ -299,16 +363,17 @@ class App(tk.Tk):
         self.configurations['fontSize'] = 15
         self.configurations['fontType'] = 'Arial'
         self.configurations['darktheme'] = 0
+        self.configurations['fontColor'] = 'Black'
         self.saveConfigurations()
 
         self.textField.config(font=(
             self.configurations['fontType'],
-            self.configurations['fontSize']))
+            self.configurations['fontSize']),
+            foreground='Black')
         self.setTheme()
 
     def changeFontType(self):
         font_type = self.font_type_var.get()
-        self.font_type_var.get()
         self.configurations['fontType'] = font_type
         self.saveConfigurations()
         self.textField.config(
@@ -446,7 +511,7 @@ class App(tk.Tk):
             self.callReset = True
 
             # storing and will be used for opening recent files
-            path = os.path.join(path_for_next_time,filename)
+            path = os.path.join(path_for_next_time, filename)
             if len(self.configurations['recentFiles']) <= 20:
                 if path in self.configurations['recentFiles']:
                     # that is, path already exist,
@@ -513,16 +578,20 @@ class App(tk.Tk):
         if val == 1:
             self.dark_theme_var.set(1)
             self.textField.config(background=self.bg_dark_theme_color,
-                                  foreground='white',
-                                  insertbackground='white')
-            self.scroll.config()    # change color etc
+                                  foreground='White',
+                                  insertbackground='White')
+            self.configurations['fontColor'] = 'White'
+            self.font_color_var.set('White')
         else:
             self.dark_theme_var.set(0)
-            self.textField.config(background='white',
-                                  foreground='black',
-                                  insertbackground='black',
+            self.textField.config(background='White',
+                                  foreground='Black',
+                                  insertbackground='Black',
                                   )
-            self.scroll.config()    # change color etc
+            self.configurations['fontColor'] = 'Black'
+            self.font_color_var.set('Black')
+
+        self.saveConfigurations()
 
     def saveConfigurations(self):
         with open('configurations.bin', 'wb') as f:
@@ -539,6 +608,7 @@ class App(tk.Tk):
                     'saved': 0,
                     'fontSize': 15,
                     'fontType': 'Arial',
+                    'fontColor': 'Black',
                     'recentFiles': []}
             return data
 
