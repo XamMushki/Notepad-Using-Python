@@ -559,7 +559,7 @@ class App(tk.Tk):
             self.configurations['path'], self.configurations['filename'])
         if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c') == '' or \
                 self.configurations['saved'] == 1 and not self.readTextFile(filename) == self.textField.get('1.0', 'end-1c'):
-            # that is
+            # that is,
             # file was not saved and the text field is not empty
             # or
             # file was saved but some new changes were made to the text
