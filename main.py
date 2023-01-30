@@ -32,12 +32,13 @@ class App(tk.Tk):
 
         self.recent_file_to_open_var = tk.StringVar()
         self.dark_theme_var = tk.IntVar()
-        self.fit_text_horizontally_var = tk.IntVar()
         self.text_var = tk.StringVar()
+        self.fit_text_horizontally_var = tk.IntVar()
         self.font_type_var = tk.StringVar()
         self.font_color_var = tk.StringVar()
         self.font_color_var.set(self.configurations['fontColor'])
         self.font_type_var.set(self.configurations['fontType'])
+        self.fit_text_horizontally_var.set(self.configurations['hScroll'])
 
         self.filetypes_to_use = (('Text files', '.txt'),
                                  ('CSV files', '.csv'),
@@ -60,27 +61,42 @@ class App(tk.Tk):
 
         self.textField = tk.Text(self, relief=tk.FLAT)
 
-        self.scroll = tk.Scrollbar(self,
+        self.scroll_y = tk.Scrollbar(self,
                                    background='dimgray',
                                    activebackground='dimgray',
                                    width=10,
                                    bg='#1c1a1a',
                                    troughcolor=self.bg_menu_color
                                    )
-        self.textField.configure(yscrollcommand=self.scroll.set,
+        self.scroll_x = tk.Scrollbar(self,
+                                    background='dimgray',
+                                    activebackground='dimgray',
+                                    bg='#1c1a1a',
+                                    troughcolor=self.bg_menu_color,
+                                    orient='horizontal'
+                                    )
+        
+        self.textField.configure(yscrollcommand=self.scroll_y.set,
+                                 xscrollcommand=self.scroll_x.set,
                                  border=0, relief=tk.FLAT,
                                  highlightthickness=0,
                                  wrap=tk.WORD,
                                  pady=5,
                                  padx=5,
-                                 tabs=(25)
+                                 tabs=(25),
+                                 
                                  )
         self.textField.config(insertwidth=3, font=(
             self.configurations['fontType'], self.configurations['fontSize']))
         self.textField.grid(sticky='nsew')
+        
+        self.scroll_y.config(command=self.textField.yview)
+        self.scroll_x.config(command=self.textField.xview)
 
-        self.scroll.config(command=self.textField.yview)
-        self.scroll.grid(row=0, column=1, sticky='nse')
+        self.scroll_y.grid(row=0, column=1, sticky='nse')
+        if not self.fit_text_horizontally_var.get():
+            self.scroll_x.grid(row=1,column=0, columnspan=2, sticky='swe')
+        
 
         self.textField.focus_set()
 
@@ -187,6 +203,7 @@ class App(tk.Tk):
                                             menu=self.font_radio_menu)
 
         # Font Color Menu
+        # Xam Mushki
         self.font_color_radio_menu = tk.Menu(self, tearoff=0,
                                              background=self.bg_menu_color,
                                              activebackground=self.color_light_blue,
@@ -219,12 +236,10 @@ class App(tk.Tk):
         # add horizontal continous text with scrollbar functinality
         # add x-axis scrollbar
         # change textField configurations
-        self.fit_text_horizontally_var.set(1)
         self.preferences.add_checkbutton(label='Fit Text Horizontally',
                                          command=self.fitTextHorizontally,
                                          underline=9,
-                                         variable=self.fit_text_horizontally_var,
-                                         state='disabled')
+                                         variable=self.fit_text_horizontally_var)
         self.preferences.add_separator()
 
         self.preferences.add_command(label='Reset To Default',
@@ -262,6 +277,7 @@ class App(tk.Tk):
         self.bind('<Control-q>', lambda event: self.exitApplication())
 
     # variables and functions
+    # Xam Mushki
     def doAtStart(self, font_color):
         self.setTheme()
         self.showRecentFiles()
@@ -558,10 +574,22 @@ class App(tk.Tk):
             if result:
                 app.destroy()
 
-    def fitTextHorizontally(self):
-        # print('Horizontal set')
-        pass
 
+    def fitTextHorizontally(self):
+        val = self.fit_text_horizontally_var.get()
+        if val:
+            # that is, no horizontal scroll is disabled and 
+            # text in the textField is made to fit the width of the window
+            self.scroll_x.grid_forget()
+            self.textField.config(wrap=tk.WORD)
+        else:
+            self.scroll_x.grid(row=1,column=0,columnspan=2,sticky='swe')
+            self.textField.config(wrap=tk.NONE)
+
+        # storing value for next time use
+        self.configurations['hScroll']=val
+        self.saveConfigurations()
+            
     def darkTheme(self):
         # Storing the value of darktheme checkbox variable for future use.
         # TODO: use different method for storing
@@ -609,6 +637,7 @@ class App(tk.Tk):
                     'fontSize': 15,
                     'fontType': 'Arial',
                     'fontColor': 'Black',
+                    'hScroll':1,
                     'recentFiles': []}
             return data
 
