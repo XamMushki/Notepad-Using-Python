@@ -62,20 +62,20 @@ class App(tk.Tk):
         self.textField = tk.Text(self, relief=tk.FLAT)
 
         self.scroll_y = tk.Scrollbar(self,
-                                   background='dimgray',
-                                   activebackground='dimgray',
-                                   width=10,
-                                   bg='#1c1a1a',
-                                   troughcolor=self.bg_menu_color
-                                   )
+                                     background='dimgray',
+                                     activebackground='dimgray',
+                                     width=10,
+                                     bg='slategrey',
+                                     troughcolor=self.bg_menu_color
+                                     )
         self.scroll_x = tk.Scrollbar(self,
-                                    background='dimgray',
-                                    activebackground='dimgray',
-                                    bg='#1c1a1a',
-                                    troughcolor=self.bg_menu_color,
-                                    orient='horizontal'
-                                    )
-        
+                                     background='dimgray',
+                                     activebackground='dimgray',
+                                     bg='slategrey',
+                                     troughcolor=self.bg_menu_color,
+                                     orient='horizontal'
+                                     )
+
         self.textField.configure(yscrollcommand=self.scroll_y.set,
                                  xscrollcommand=self.scroll_x.set,
                                  border=0, relief=tk.FLAT,
@@ -84,19 +84,19 @@ class App(tk.Tk):
                                  pady=5,
                                  padx=5,
                                  tabs=(25),
-                                 
+
                                  )
         self.textField.config(insertwidth=3, font=(
             self.configurations['fontType'], self.configurations['fontSize']))
         self.textField.grid(sticky='nsew')
-        
+
         self.scroll_y.config(command=self.textField.yview)
         self.scroll_x.config(command=self.textField.xview)
 
         self.scroll_y.grid(row=0, column=1, sticky='nse')
-        if not self.fit_text_horizontally_var.get():
-            self.scroll_x.grid(row=1,column=0, columnspan=2, sticky='swe')
-        
+
+        # Decide whether hScroll is enabled or disabled
+        self.fitTextHorizontally()
 
         self.textField.focus_set()
 
@@ -233,9 +233,6 @@ class App(tk.Tk):
                                          command=self.darkTheme,
                                          )
 
-        # add horizontal continous text with scrollbar functinality
-        # add x-axis scrollbar
-        # change textField configurations
         self.preferences.add_checkbutton(label='Fit Text Horizontally',
                                          command=self.fitTextHorizontally,
                                          underline=9,
@@ -477,6 +474,26 @@ class App(tk.Tk):
                 self.configurations['filename'] = filename
                 self.configurations['saved'] = 1
 
+                # storing and will be used for opening recent files
+                path = file_to_open
+                if len(self.configurations['recentFiles']) <= 20:
+                    if path in self.configurations['recentFiles']:
+                        # that is, path already exist,
+                        # now removing it ...
+                        self.configurations['recentFiles'].remove(path)
+                    # ... and placing it at index zero, since the list doesn't contain the path,
+                    # because it is either removed in the above step or it wasn't stored in the first place.
+                    self.configurations['recentFiles'].insert(0, path)
+                else:
+                    # len >20, remove last element/path
+                    # and insert new path at index 0
+                    del self.configurations['recentFiles'][-1]
+                    self.configurations['recentFiles'].insert(0, path)
+
+                self.saveConfigurations()
+                # update the list in UI
+                self.showRecentFiles()
+
     def saveFile(self):
         # self.configurations['saved']=0
         text = self.textField.get('1.0', 'end-1c')
@@ -574,22 +591,21 @@ class App(tk.Tk):
             if result:
                 app.destroy()
 
-
     def fitTextHorizontally(self):
         val = self.fit_text_horizontally_var.get()
         if val:
-            # that is, no horizontal scroll is disabled and 
+            # that is, no horizontal scroll is disabled and
             # text in the textField is made to fit the width of the window
             self.scroll_x.grid_forget()
             self.textField.config(wrap=tk.WORD)
         else:
-            self.scroll_x.grid(row=1,column=0,columnspan=2,sticky='swe')
+            self.scroll_x.grid(row=1, column=0, columnspan=2, sticky='swe')
             self.textField.config(wrap=tk.NONE)
 
         # storing value for next time use
-        self.configurations['hScroll']=val
+        self.configurations['hScroll'] = val
         self.saveConfigurations()
-            
+
     def darkTheme(self):
         # Storing the value of darktheme checkbox variable for future use.
         # TODO: use different method for storing
@@ -637,7 +653,7 @@ class App(tk.Tk):
                     'fontSize': 15,
                     'fontType': 'Arial',
                     'fontColor': 'Black',
-                    'hScroll':1,
+                    'hScroll': 1,
                     'recentFiles': []}
             return data
 
