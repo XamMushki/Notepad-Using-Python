@@ -275,6 +275,7 @@ class App(tk.Tk):
 
     # variables and functions
     # Xam Mushki
+    # 
     def doAtStart(self, font_color):
         self.setTheme()
         self.showRecentFiles()
@@ -283,22 +284,12 @@ class App(tk.Tk):
         self.font_color_var.set(font_color)
 
     callReset = False
-
-    def changeFontColor(self):
-        font_color = self.font_color_var.get()
-        self.configurations['fontColor'] = font_color
-        self.saveConfigurations()
-        self.textField.config(fg=self.configurations['fontColor'])
-
-    def showAbout(self):
-        photo = tk.PhotoImage(file='icon.png')
-        messagebox.showinfo('About Alfaaz', 'Alfaaz is a simple but functional text editor, \
-            that is developed using Python and Tkinter.\n\nDeveloper: Xam Mushki')
-
+    
     # def openRecentFile(self,file):
     #     def fun():
     #         print(file)
     #     return fun
+
     def openRecentFile(self, file):
         def openOurFile():
             can_open_file = False
@@ -368,40 +359,6 @@ class App(tk.Tk):
             self.showRecentFiles()
         else:
             pass
-
-    def resetSettings(self):
-        # self.configurations['path'] = '/'
-        # self.configurations['filename'] = ''
-        self.configurations['saved'] = 0
-        self.configurations['fontSize'] = 15
-        self.configurations['fontType'] = 'Arial'
-        self.configurations['darktheme'] = 0
-        self.configurations['fontColor'] = 'Black'
-        self.saveConfigurations()
-
-        self.textField.config(font=(
-            self.configurations['fontType'],
-            self.configurations['fontSize']),
-            foreground='Black')
-        self.setTheme()
-
-    def changeFontType(self):
-        font_type = self.font_type_var.get()
-        self.configurations['fontType'] = font_type
-        self.saveConfigurations()
-        self.textField.config(
-            font=(self.configurations['fontType'], self.configurations['fontSize']))
-
-    def changeFontSize(self):
-        result = simpledialog.askinteger('Font Size',
-                                         'Enter Font Size (px)',
-                                         minvalue=1,
-                                         initialvalue=self.configurations['fontSize'])
-        if result:
-            self.configurations['fontSize'] = result
-            self.saveConfigurations()
-            self.textField.config(
-                font=(self.configurations['fontType'], self.configurations['fontSize']))
 
     def createNewFile(self):
         filename = os.path.join(self.configurations['path'],
@@ -563,33 +520,23 @@ class App(tk.Tk):
             # update the list in UI
             self.showRecentFiles()
 
-    def writeTextFile(self, filename, text):
-        with open(filename, 'w') as f:
-            f.write(text)
+    def changeFontType(self):
+        font_type = self.font_type_var.get()
+        self.configurations['fontType'] = font_type
+        self.saveConfigurations()
+        self.textField.config(
+            font=(self.configurations['fontType'], self.configurations['fontSize']))
 
-    def readTextFile(self, filename):
-        with open(filename, 'r') as f:
-            return f.read()
-
-    def exitApplication(self):
-        filename = os.path.join(
-            self.configurations['path'], self.configurations['filename'])
-        if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c') == '' or \
-                self.configurations['saved'] == 1 and not self.readTextFile(filename) == self.textField.get('1.0', 'end-1c'):
-            # that is,
-            # file was not saved and the text field is not empty
-            # or
-            # file was saved but some new changes were made to the text
-            result = messagebox.askyesno(
-                'Exit without Saving', 'Are you sure, you want to exit without saving?')
-            if result:
-                self.destroy()
-        else:
-            # also used and called when window X/exit button is clicked from on_closing()
-            result = messagebox.askyesno(
-                'Exit Alfaaz', 'Are you sure, you want to exit?')
-            if result:
-                app.destroy()
+    def changeFontSize(self):
+        result = simpledialog.askinteger('Font Size',
+                                         'Enter Font Size (px)',
+                                         minvalue=1,
+                                         initialvalue=self.configurations['fontSize'])
+        if result:
+            self.configurations['fontSize'] = result
+            self.saveConfigurations()
+            self.textField.config(
+                font=(self.configurations['fontType'], self.configurations['fontSize']))
 
     def fitTextHorizontally(self):
         val = self.fit_text_horizontally_var.get()
@@ -657,13 +604,66 @@ class App(tk.Tk):
                     'recentFiles': []}
             return data
 
+    def changeFontColor(self):
+        font_color = self.font_color_var.get()
+        self.configurations['fontColor'] = font_color
+        self.saveConfigurations()
+        self.textField.config(fg=self.configurations['fontColor'])
+
+    def showAbout(self):
+        photo = tk.PhotoImage(file='icon.png')
+        messagebox.showinfo('About Alfaaz', 'Alfaaz is a simple but functional text editor, \
+            that is developed using Python and Tkinter.\n\nDeveloper: Xam Mushki')
+
+    def resetSettings(self):
+        # reset configurations
+        self.configurations['saved'] = 0
+        self.configurations['fontSize'] = 15
+        self.configurations['fontType'] = 'Arial'
+        self.configurations['darktheme'] = 0
+        self.configurations['fontColor'] = 'Black'
+        self.saveConfigurations()
+
+        self.textField.config(font=(
+            self.configurations['fontType'],
+            self.configurations['fontSize']),
+            foreground='Black')
+        self.setTheme()
+
     def resetEverything(self):
         self.textField.delete('1.0', 'end')
         self.title('Alfaaz - *untitled')
         self.configurations['filename'] = ''
         self.configurations['saved'] = 0
         self.callReset = False
-        # self.textField.insert('end','')
+
+    def exitApplication(self):
+        filename = os.path.join(
+            self.configurations['path'], self.configurations['filename'])
+        if self.configurations['saved'] == 0 and not self.textField.get('1.0', 'end-1c') == '' or \
+                self.configurations['saved'] == 1 and not self.readTextFile(filename) == self.textField.get('1.0', 'end-1c'):
+            # that is,
+            # file was not saved and the text field is not empty
+            # or
+            # file was saved but some new changes were made to the text
+            result = messagebox.askyesno(
+                'Exit without Saving', 'Are you sure, you want to exit without saving?')
+            if result:
+                self.destroy()
+        else:
+            # also used and called when window X/exit button is clicked from on_closing()
+            result = messagebox.askyesno(
+                'Exit Alfaaz', 'Are you sure, you want to exit?')
+            if result:
+                app.destroy()
+
+    def writeTextFile(self, filename, text):
+        with open(filename, 'w') as f:
+            f.write(text)
+
+    def readTextFile(self, filename):
+        with open(filename, 'r') as f:
+            return f.read()
 
 
 if __name__ == "__main__":
