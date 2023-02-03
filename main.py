@@ -17,6 +17,8 @@ class App(tk.Tk):
         self.geometry("%dx%d+%d+%d" % (1000, 500, MyLeftPos, myTopPos))
         self.minsize(500, 300)
         self.title('Alfaaz - *untitled')
+        photo = tk.PhotoImage(file='icon.png')
+        self.iconphoto(False, photo)
 
         # Variables
         self.bg_color = '#382929'
@@ -36,6 +38,8 @@ class App(tk.Tk):
         self.fit_text_horizontally_var = tk.IntVar()
         self.font_type_var = tk.StringVar()
         self.font_color_var = tk.StringVar()
+        self.status_var = tk.StringVar()
+        self.status_var.set('Ready')
         self.font_color_var.set(self.configurations['fontColor'])
         self.font_type_var.set(self.configurations['fontType'])
         self.fit_text_horizontally_var.set(self.configurations['hScroll'])
@@ -100,6 +104,20 @@ class App(tk.Tk):
 
         self.textField.focus_set()
 
+        # Status Bar Label
+
+        self.status_bar = tk.Label(self,
+                                   font=('Kalimati', 10),
+                                   background='#007ACC',
+                                   foreground='white',
+                                   border=0,
+                                   textvariable=self.status_var,
+                                   anchor='se',
+                                   padx=25,
+                                   pady=0)
+
+        self.status_bar.grid(row=2, column=0, columnspan=2, sticky='swe')
+
         # self.menu = tk.Menu(self)
         self.menu = tk.Menu(self, bg=self.bg_menu_color,
                             fg=self.fg_color,
@@ -155,6 +173,30 @@ class App(tk.Tk):
         self.files_menu.add_command(label='   Exit'.ljust(38)+'Ctrl+Q',
                                     underline=4,
                                     command=self.exitApplication)
+
+        # Edit Menu Cascade
+        self.edit_menu = tk.Menu(self, tearoff=0,
+                                 background=self.bg_menu_color,
+                                 activebackground=self.color_light_blue,
+                                 activeforeground='white',
+                                 foreground='white',
+                                 border=0)
+        self.menu.add_cascade(menu=self.edit_menu,
+                              label='Edit',
+                              underline=0)
+        self.edit_menu.add_command(label='   Cut'.ljust(34)+'Ctrl+X',
+                                   underline=5,
+                                   command=lambda: self.textField.event_generate("<<Cut>>"))
+        self.edit_menu.add_command(label='   Copy'.ljust(32)+'Ctrl+C',
+                                   underline=3,
+                                   command=lambda: self.textField.event_generate("<<Copy>>"))
+        self.edit_menu.add_command(label='   Paste'.ljust(32)+'Ctrl+V',
+                                   underline=3,
+                                   command=lambda: self.textField.event_generate("<<Paste>>"))
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(label='   Select All'.ljust(30)+'Ctrl+A',
+                                   underline=3,
+                                   command=self.selectAllText)
         # Preferences Cascade
         self.preferences = tk.Menu(self, tearoff=0,
                                    background=self.bg_menu_color,
@@ -272,10 +314,11 @@ class App(tk.Tk):
         # uppercase S means Ctrl+Shift+s
         self.bind('<Control-S>', lambda event: self.saveFileAs())
         self.bind('<Control-q>', lambda event: self.exitApplication())
+        self.bind('<Control-a>', lambda event: self.selectAllText())
 
     # variables and functions
     # Xam Mushki
-    # 
+    #
     def doAtStart(self, font_color):
         self.setTheme()
         self.showRecentFiles()
@@ -284,7 +327,7 @@ class App(tk.Tk):
         self.font_color_var.set(font_color)
 
     callReset = False
-    
+
     # def openRecentFile(self,file):
     #     def fun():
     #         print(file)
@@ -336,6 +379,7 @@ class App(tk.Tk):
                     self.title('Alfaaz - '+filename)
                     self.configurations['filename'] = filename
                     self.configurations['saved'] = 1
+                    self.status_var.set('Ready')
         return openOurFile
 
     def showRecentFiles(self):
@@ -357,6 +401,7 @@ class App(tk.Tk):
             self.configurations['recentFiles'] = []
             self.saveConfigurations()
             self.showRecentFiles()
+            self.status_var.set('Recent Files Cleared')
         else:
             pass
 
@@ -381,6 +426,7 @@ class App(tk.Tk):
                 self.resetEverything()
         else:
             self.resetEverything()
+        self.status_var.set('Ready')
 
     def openFile(self):
         can_open_file = False
@@ -450,6 +496,7 @@ class App(tk.Tk):
                 self.saveConfigurations()
                 # update the list in UI
                 self.showRecentFiles()
+        self.status_var.set('Ready')
 
     def saveFile(self):
         # self.configurations['saved']=0
@@ -463,6 +510,7 @@ class App(tk.Tk):
                 self.configurations['path'], self.configurations['filename'])
             self.writeTextFile(path, text)
             self.callReset = True
+            self.status_var.set('Saved')
 
             # storing and will be used for opening recent files
             if len(self.configurations['recentFiles']) <= 20:
@@ -497,6 +545,7 @@ class App(tk.Tk):
             self.writeTextFile(file_to_save, text)
             self.configurations['saved'] = 1
             self.title('Alfaaz - '+filename)
+            self.status_var.set('Saved')
 
             self.callReset = True
 
@@ -519,6 +568,11 @@ class App(tk.Tk):
             self.saveConfigurations()
             # update the list in UI
             self.showRecentFiles()
+
+    def selectAllText(self):
+        self.textField.tag_add(tk.SEL, '1.0', 'end')
+        # self.textField.mark_set(tk.INSERT,'1.0')
+        self.textField.see(tk.INSERT)
 
     def changeFontType(self):
         font_type = self.font_type_var.get()
@@ -622,7 +676,9 @@ class App(tk.Tk):
         self.configurations['fontType'] = 'Arial'
         self.configurations['darktheme'] = 0
         self.configurations['fontColor'] = 'Black'
+        self.fit_text_horizontally_var.set(1)
         self.saveConfigurations()
+        self.fitTextHorizontally()
 
         self.textField.config(font=(
             self.configurations['fontType'],
@@ -649,12 +705,14 @@ class App(tk.Tk):
             result = messagebox.askyesno(
                 'Exit without Saving', 'Are you sure, you want to exit without saving?')
             if result:
+                self.status_var.set('Exiting...')
                 self.destroy()
         else:
             # also used and called when window X/exit button is clicked from on_closing()
             result = messagebox.askyesno(
                 'Exit Alfaaz', 'Are you sure, you want to exit?')
             if result:
+                self.status_var.set('Exiting...')
                 app.destroy()
 
     def writeTextFile(self, filename, text):
