@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 from tkinter import simpledialog
+from tkinter import colorchooser
 import os
 import pickle
 
@@ -63,7 +64,11 @@ class App(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.textField = tk.Text(self, relief=tk.FLAT)
+        self.textField = tk.Text(self,
+                                 relief=tk.FLAT,
+                                 background=self.configurations['textBackground'],
+                                 insertbackground=self.configurations['insertColor']
+                                 )
 
         self.scroll_y = tk.Scrollbar(self,
                                      background='dimgray',
@@ -82,13 +87,13 @@ class App(tk.Tk):
 
         self.textField.configure(yscrollcommand=self.scroll_y.set,
                                  xscrollcommand=self.scroll_x.set,
-                                 border=0, relief=tk.FLAT,
+                                 border=0,
+                                 relief=tk.FLAT,
                                  highlightthickness=0,
                                  wrap=tk.WORD,
                                  pady=5,
                                  padx=5,
                                  tabs=(25),
-
                                  )
         self.textField.config(insertwidth=3, font=(
             self.configurations['fontType'], self.configurations['fontSize']))
@@ -266,6 +271,11 @@ class App(tk.Tk):
         self.font_settings_menu.add_cascade(label='   Font Color'.ljust(20),
                                             underline=8,
                                             menu=self.font_color_radio_menu)
+        self.font_color_radio_menu.add_separator()
+
+        self.font_color_radio_menu.add_command(label='Choose Color...',
+                                               underline=0,
+                                               command=self.chooseFontColor)
 
         self.preferences.add_separator()
 
@@ -279,6 +289,15 @@ class App(tk.Tk):
                                          command=self.fitTextHorizontally,
                                          underline=9,
                                          variable=self.fit_text_horizontally_var)
+        self.preferences.add_separator()
+
+        self.preferences.add_command(label='Choose Background Color',
+                                     underline=8,
+                                     command=self.changeBackgroundColor)
+        self.preferences.add_command(label='Choose Insert Color',
+                                     underline=8,
+                                     command=self.chooseInsertColor)
+
         self.preferences.add_separator()
 
         self.preferences.add_command(label='Reset To Default',
@@ -319,8 +338,28 @@ class App(tk.Tk):
     # variables and functions
     # Xam Mushki
     #
+    def chooseInsertColor(self):
+        color = colorchooser.askcolor(initialcolor='black')
+        self.configurations['insertColor'] = str(color[1])
+        self.saveConfigurations()
+        self.textField.config(
+            insertbackground=self.configurations['insertColor'])
+
+    def changeBackgroundColor(self):
+        color = colorchooser.askcolor(initialcolor='white')
+        self.configurations['textBackground'] = str(color[1])
+        self.saveConfigurations()
+        self.textField.config(background=self.configurations['textBackground'])
+
+    def chooseFontColor(self):
+        color = colorchooser.askcolor(initialcolor='black')
+        self.configurations['fontColor'] = str(color[1])
+        self.saveConfigurations()
+        self.textField.config(fg=self.configurations['fontColor'])
+        self.font_color_var.set('')
+
     def doAtStart(self, font_color):
-        self.setTheme()
+        # self.setTheme()
         self.showRecentFiles()
         self.textField.config(foreground=font_color)
         self.configurations['fontColor'] = font_color
@@ -625,7 +664,10 @@ class App(tk.Tk):
             self.textField.config(background=self.bg_dark_theme_color,
                                   foreground='White',
                                   insertbackground='White')
+
+            self.configurations['textBackground'] = self.bg_dark_theme_color
             self.configurations['fontColor'] = 'White'
+            self.configurations['insertColor'] = 'white'
             self.font_color_var.set('White')
         else:
             self.dark_theme_var.set(0)
@@ -633,7 +675,9 @@ class App(tk.Tk):
                                   foreground='Black',
                                   insertbackground='Black',
                                   )
+            self.configurations['textBackground'] = 'white'
             self.configurations['fontColor'] = 'Black'
+            self.configurations['insertColor'] = 'black'
             self.font_color_var.set('Black')
 
         self.saveConfigurations()
@@ -655,6 +699,8 @@ class App(tk.Tk):
                     'fontType': 'Arial',
                     'fontColor': 'Black',
                     'hScroll': 1,
+                    'textBackground': 'white',
+                    'insertColor': 'black',
                     'recentFiles': []}
             return data
 
