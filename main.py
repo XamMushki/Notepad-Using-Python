@@ -6,7 +6,6 @@ from tkinter import colorchooser
 import os
 import pickle
 
-
 class App(tk.Tk):
 
     def __init__(self, *args, **kwargs):
